@@ -1,0 +1,386 @@
+Task 1
+
+import socket
+
+host = "127.0.0.1"
+port = 12345
+
+s = socket.socket();
+s.bind((host,port));
+
+s.listen(1);
+print("Waiting for client")
+
+conn, addr = s.accept();
+
+print("Connected by", addr);
+
+while True:
+	msg = conn.recv(1024).decode();
+	if not msg:
+		break;
+	
+	print("Client:",msg);
+	reply = input("Server: ")
+	conn.send(reply.encode());
+	if reply.lower == "bye" or msg.lower() == "bye":
+		break;
+
+conn.close();
+s.close();
+
+-------------------------------------------------------------
+
+import socket
+host = "127.0.0.1"
+port = 12345
+
+s = socket.socket();
+s.connect((host,port));
+
+print("Connected to server, Type "bye" to quit");
+
+while True:
+	msg = input("Client: ");
+	s.send(msg.encode());
+	if msg.lower() == "bye":
+		break;
+	
+	reply = s.recv(1024).decode();
+	
+	print("Server:", reply)
+	if reply.lower == "bye":
+		break;
+
+s.close();
+
+----------------------------------------------------------------------------------------------
+Task 2
+
+import socket
+import math
+
+host = "127.0.0.1"
+port = 12346
+
+s = socket.socket();
+s.bind((host, port));
+
+s.listen(1);
+print("Waiting for client");
+
+
+conn, addr = s.accept();
+
+print("Connected by", addr);
+
+#print(f'Connected by {addr}')
+
+while True:
+	data = conn.recv(1024).decode();
+	if not data:
+		break;
+
+	n = input(data);
+	
+	result = math.factorial(int(n));
+	
+	conn.send(string(result).encode());
+
+conn.close();
+s.close();
+
+-----------------------------------------------
+
+import socket
+
+host = "127.0.0.1"
+port = 12346
+
+s = socket.socket();
+s.connect((host, port));
+
+print("Connected by factorial server");
+
+while True:
+	n = input("Enter number (or "bye" to quit);
+	if n.lower() == "bye"
+		break
+	
+	s.send(n.encode());
+	result = s.recv(1024).decode();
+	
+	print("Factorial: ", result);
+
+s.close();
+
+
+----------------------------------------------------------------------------------------
+Task 3
+
+import socket
+
+host = "127.0.0.1"
+port = 12348
+
+s = socket.socket()
+s.bind((host, port))
+s.listen(1)
+print("Server waiting for client...")
+
+conn, addr = s.accept()
+print("Connected by", addr)
+
+while True:
+    word = conn.recv(1024).decode()
+    if not word or word.lower() == "bye":
+        break
+    vowels = ''.join([c for c in word if c.lower() in "aeiou"])
+    conn.send(vowels.encode())
+
+conn.close()
+s.close()
+
+--------------------------------------------------------
+
+
+import socket
+
+host = "127.0.0.1"
+port = 12348
+
+s = socket.socket()
+s.connect((host, port))
+print("Connected to vowel server.")
+
+while True:
+    word = input("Enter word (or 'bye' to quit): ")
+    s.send(word.encode())
+    if word.lower() == "bye":
+        break
+    vowels = s.recv(1024).decode()
+    print("Vowels:", vowels)
+
+s.close()
+
+
+
+---------------------------------------------------------------------------
+
+Task 4
+
+import socket
+
+host = "127.0.0.1"
+port = 12347
+
+s = socket.socket()
+s.bind((host, port))
+s.listen(1)
+print("Server waiting for client...")
+
+conn, addr = s.accept()
+print("Connected by", addr)
+
+filename = conn.recv(1024).decode()
+with open("received_" + filename, "wb") as f:
+    while True:
+        data = conn.recv(1024)
+        if not data:
+            break
+        f.write(data)
+
+print("File received.")
+conn.close()
+s.close()
+
+---------------------------------------------------------------
+
+import socket
+import os
+
+host = "127.0.0.1"
+port = 12347
+
+s = socket.socket()
+s.connect((host, port))
+
+filename = input("Enter file name to send: ")
+if os.path.exists(filename):
+    s.send(filename.encode())
+    with open(filename, "rb") as f:
+        chunk = f.read(1024)
+        while chunk:
+            s.send(chunk)
+            chunk = f.read(1024)
+    print("File sent.")
+else:
+    print("File not found.")
+
+s.close()
+
+---------------------------------------------------------------
+Task 5
+
+import socket
+
+HOST = '127.0.0.1'
+PORT = 65437
+
+s = socket.socket()
+s.bind((HOST, PORT))
+s.listen(1)
+
+print("Server waiting...")
+conn, addr = s.accept()
+print("Connected by", addr)
+
+while True:
+    data = conn.recv(1024).decode()
+    if not data:
+        break
+
+    if data.startswith("SEND_FILE"):
+        filename = data.split()[1]
+        file_data = conn.recv(4096).decode()
+        with open("received_" + filename, "w") as f:
+            f.write(file_data)
+        print(f"File {filename} received.")
+        continue
+
+    print("Client:", data)
+    if data.lower() == "bye":
+        break
+
+    reply = input("Server: ")
+    conn.send(reply.encode())
+    if reply.lower() == "bye":
+        break
+
+conn.close()
+s.close()
+
+
+--------------------------------------------------------------
+import socket
+
+HOST = '127.0.0.1'
+PORT = 65437
+
+s = socket.socket()
+s.connect((HOST, PORT))
+print("Connected to server.")
+
+while True:
+    msg = input("Client: ")
+    s.send(msg.encode())
+
+    if msg.startswith("SEND_FILE"):
+        filename = msg.split()[1]
+        with open(filename, "r") as f:
+            s.send(f.read().encode())
+        print("File sent.")
+        continue
+
+    if msg.lower() == "bye":
+        break
+
+    reply = s.recv(1024).decode()
+    print("Server:", reply)
+    if reply.lower() == "bye":
+        break
+
+s.close()
+
+
+--------------------------------------------------------
+MultiServer
+
+import socket
+import threading
+
+HOST = '127.0.0.1'
+PORT = 55557
+
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.bind((HOST, PORT))
+server.listen()
+
+clients = []
+nicknames = []
+
+def broadcast(message):
+    for client in clients:
+        client.send(message)
+
+def handle(client):
+    while True:
+        try:
+            msg = client.recv(1024)
+            broadcast(msg)
+        except:
+            index = clients.index(client)
+            clients.remove(client)
+            client.close()
+            nickname = nicknames[index]
+            broadcast(f'{nickname} left the chat.'.encode('utf-8'))
+            nicknames.remove(nickname)
+            break
+
+def receive():
+    print("Server running...")
+    while True:
+        client, address = server.accept()
+        print(f"Connected with {str(address)}")
+
+        client.send('NICK'.encode('utf-8'))
+        nickname = client.recv(1024).decode('utf-8')
+        nicknames.append(nickname)
+        clients.append(client)
+
+        print(f"Nickname of the client is {nickname}")
+        broadcast(f"{nickname} joined the chat!".encode('utf-8'))
+
+        thread = threading.Thread(target=handle, args=(client,))
+        thread.start()
+
+receive()
+
+
+-------------------------
+MultiClient
+
+import socket
+import threading
+
+HOST = '127.0.0.1'
+PORT = 55557
+
+nickname = input("Choose a nickname: ")
+
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client.connect((HOST, PORT))
+
+def receive():
+    while True:
+        try:
+            msg = client.recv(1024).decode('utf-8')
+            if msg == 'NICK':
+                client.send(nickname.encode('utf-8'))
+            else:
+                print(msg)
+        except:
+            print("Error! Connection closed.")
+            client.close()
+            break
+
+def write():
+    while True:
+        msg = f'{nickname}: {input("")}'
+        client.send(msg.encode('utf-8'))
+
+threading.Thread(target=receive).start()
+threading.Thread(target=write).start()
+
+
+
