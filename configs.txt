@@ -1,0 +1,111 @@
+Cisco Packet Tracer – CLI Configurations (Telnet, SSH, ACLs, NAT,
+Routing)
+
+===================== TELNET CONFIGURATION =====================
+line vty 0 15 
+password cisco 
+login 
+enable password 123
+
+===================== SSH CONFIGURATION =====================
+hostname R1 
+ip domain name example.com 
+crypto key generate rsa 
+username admin 		 //optional
+secret admin123 	//optional
+ip ssh version 2
+line vty 0 15 
+login local 		//optional
+transport input ssh	//optional
+
+===================== BASIC ACL (STANDARD) =====================
+access-list 1 permit 192.168.1.0 0.0.0.255 
+interface fa0/0 
+ip access-group 1 in/out
+
+===================== EXTENDED ACL ===================== 
+access-list 100 deny icmp 192.168.1.0 0.0.0.255 192.168.2.0 0.0.0.255 echo (denying network 192.168.1.0 permissions so that it cant contact network 192.168.2.0)
+access-list 100 permit ip any any 
+interface fa0/0 
+ip access-group 100 in
+
+===================== STATIC NAT ===================== 
+ip nat inside source static 192.168.1.10 203.0.113.10  (First ip --> pc or device NAT should be performed on, second ip --> any ip of the network between the routers)
+interface g0/0 
+ip nat inside
+interface g0/1 
+ip nat outside
+ip route <ip address of the network we are trying to reach> <subnet mask> <ip address of the next hop>
+
+===================== DYNAMIC NAT (POOL) ===================== 
+ip nat pool MYPPOOL 203.0.113.20 203.0.113.30 netmask 255.255.255.0 
+access-list 10 permit 192.168.1.0 0.0.0.255 
+ip nat inside source list 10 pool MYPPOOL overload 
+interface g0/0
+ip nat inside 
+interface g0/1 
+ip nat outside
+ip route ...
+===================== STATIC ROUTING ===================== 
+ip route 192.168.2.0 255.255.255.0 10.0.0.2
+
+===================== RIP ROUTING ===================== 
+router rip
+version 2 
+network 192.168.1.0 
+network 10.0.0.0
+
+===================== OSPF ROUTING =====================
+router ospf 1
+network 192.168.1.0 0.0.0.255 area 0
+network 10.0.0.0 0.0.0.255 area 0
+
+===================== BGP ROUTING =====================
+router bgp 71
+neighbor 10.0.0.2 remote-as 75
+network 192.168.1.0 mask 255.255.255.0
+exit
+do write
+
+===================== VLAN CONFIGURATION =====================
+! Create VLANs
+vlan 10
+name SALES
+vlan 20
+name HR
+vlan 30
+name ACCOUNTS
+
+! Assign ports to VLANs
+interface fa0/1
+switchport mode access
+switchport access vlan 10
+
+interface fa0/2
+switchport mode access
+switchport access vlan 20
+
+interface fa0/3
+switchport mode access
+switchport access vlan 30
+
+! Configure trunk port towards Router (or L3 Switch)
+interface fa0/24
+switchport mode trunk
+switchport trunk allowed vlan 10,20,30
+
+===================== INTER-VLAN ROUTING (ROUTER-ON-A-STICK) =====================
+interface g0/0
+no shutdown
+
+interface g0/0.10
+encapsulation dot1Q 10
+ip address 192.168.10.1 255.255.255.0
+
+interface g0/0.20
+encapsulation dot1Q 20
+ip address 192.168.20.1 255.255.255.0
+
+interface g0/0.30
+encapsulation dot1Q 30
+ip address 192.168.30.1 255.255.255.0
